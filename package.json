@@ -1,0 +1,35 @@
+{
+  "name": "orbit-backend",
+  "version": "1.0.0",
+  "description": "Backend for a networking platform where founders and builders discover, connect and collaborate.",
+  "keywords": [
+    "orbit",
+    "networking",
+    "founders",
+    "builders",
+    "collaboration",
+    "nodejs",
+    "express",
+    "mongodb",
+    "mongoose"
+  ],
+  "homepage": "https://github.com/the-ajay-panigrahi/orbit-backend#readme",
+  "bugs": {
+    "url": "https://github.com/the-ajay-panigrahi/orbit-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-ajay-panigrahi/orbit-backend.git"
+  },
+  "license": "ISC",
+  "author": "Ajay Panigrahi",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
