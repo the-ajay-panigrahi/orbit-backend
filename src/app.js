@@ -6,6 +6,36 @@ const PORT = 7777
 
 
 
+app.get("/user", (req, res) => {
+    res.send({ firstName: "Ajay", lastName: "Panigrahi" })
+})
+
+app.post("/user", (req, res) => {
+    console.log("Data is successfully pushed!");
+    res.send({ firstName: "Vijay", lastName: "Panigrahi" })
+})
+
+app.put("/user", (req, res) => {
+    console.log("Replaced/created");
+    res.send({ firstName: "Dhananjaya", lastName: "Panigrahi" })
+})
+
+
+app.use("/user", (req, res) => {
+    res.send("HehhhhaHahahahahah!!!!!!!!")
+})
+
+
+app.patch("/user", (req, res) => {
+    console.log("Sample update/bug fix");
+    res.send({ firstName: "Dhananjaya", lastName: "Panigrahi" })
+})
+
+app.delete("/user", (req, res) => {
+    console.log("DELETED!!");
+    res.send(123)
+})
+
 app.use("/sample", (req, res) => {
     res.send("Sample Testing 🥳")
 })
@@ -29,9 +59,9 @@ app.use("/lanka", (req, res) => {
     res.send("Lanka dahan!!!!!!!")
 })
 
-app.use("/", (req, res) => {
-    res.send("Ram Ram!")
-})
+// app.use("/", (req, res) => {
+//     res.send("Ram Ram!")
+// })
 
 
 
