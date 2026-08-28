@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 7777;
 
 app.use(express.json());
 
-// Signup Route
+// Signup 
 app.post("/signup", async (req, res) => {
   try {
     const user = new User(req.body);
@@ -24,7 +24,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// Get single user by query (e.g., /user?email=... or /user?userId=...)
+// Get single user
 app.get("/user", async (req, res) => {
   try {
     const { email, userId } = req.query;
@@ -35,7 +35,9 @@ app.get("/user", async (req, res) => {
     } else if (email) {
       user = await User.findOne({ email: email.toLowerCase() });
     } else {
-      return res.status(400).json({ error: "Please provide an email or userId query parameter" });
+      return res
+        .status(400)
+        .json({ error: "Please provide an email or userId query parameter" });
     }
 
     if (!user) {
@@ -58,14 +60,10 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-// Delete user by ID (supports /user/:userId or body userId)
-app.delete("/user/:userId?", async (req, res) => {
+// Delete user by ID
+app.delete("/user/:userId", async (req, res) => {
   try {
-    const userId = req.params.userId || req.body?.userId || req.body?.myId;
-
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required for deletion" });
-    }
+    const { userId } = req.params;
 
     const deletedUser = await User.findByIdAndDelete(userId);
 
@@ -73,7 +71,9 @@ app.delete("/user/:userId?", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ message: "User successfully deleted!", data: deletedUser });
+    res
+      .status(200)
+      .json({ message: "User successfully deleted!", data: deletedUser });
   } catch (error) {
     res.status(400).json({ error: error.message || "Failed to delete user" });
   }
@@ -95,11 +95,13 @@ app.patch("/user/:userId", async (req, res) => {
   ];
 
   const isUpdateAllowed = Object.keys(data).every((key) =>
-    ALLOWED_UPDATES.includes(key)
+    ALLOWED_UPDATES.includes(key),
   );
 
   if (!isUpdateAllowed) {
-    return res.status(400).json({ error: "Update not allowed for one or more fields!" });
+    return res
+      .status(400)
+      .json({ error: "Update not allowed for one or more fields!" });
   }
 
   try {
