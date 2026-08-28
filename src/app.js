@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 7777;
 
 app.use(express.json());
 
-// Signup 
+// Signup
 app.post("/signup", async (req, res) => {
   try {
     const user = new User(req.body);
@@ -81,30 +81,30 @@ app.delete("/user/:userId", async (req, res) => {
 
 // Update user profile by ID
 app.patch("/user/:userId", async (req, res) => {
-  const { userId } = req.params;
-  const data = req.body;
-
-  const ALLOWED_UPDATES = [
-    "profilePictureUrl",
-    "about",
-    "lookingFor",
-    "gender",
-    "age",
-    "skills",
-    "password",
-  ];
-
-  const isUpdateAllowed = Object.keys(data).every((key) =>
-    ALLOWED_UPDATES.includes(key),
-  );
-
-  if (!isUpdateAllowed) {
-    return res
-      .status(400)
-      .json({ error: "Update not allowed for one or more fields!" });
-  }
-
   try {
+    const { userId } = req.params;
+    const data = req.body;
+
+    const ALLOWED_UPDATES = [
+      "profilePictureUrl",
+      "about",
+      "lookingFor",
+      "gender",
+      "age",
+      "skills",
+      "password",
+    ];
+
+    const isUpdateAllowed = Object.keys(data).every((key) =>
+      ALLOWED_UPDATES.includes(key),
+    );
+
+    if (!isUpdateAllowed) {
+      return res
+        .status(400)
+        .json({ error: "Update not allowed for one or more fields!" });
+    }
+
     const user = await User.findByIdAndUpdate(userId, data, {
       returnDocument: "after",
       runValidators: true,
