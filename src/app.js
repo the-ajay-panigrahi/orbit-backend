@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const ConnectDB = require("./config/database");
 const User = require("./models/user");
+const { validateSignUp, validateLogIn } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 const PORT = process.env.PORT || 7777;
@@ -11,15 +13,64 @@ app.use(express.json());
 // Signup
 app.post("/signup", async (req, res) => {
   try {
-    const user = new User(req.body);
+    validateSignUp(req);
+
+    const { firstName, lastName, email, password } = req.body;
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: passwordHash,
+    });
+
     await user.save();
+
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
     res.status(201).json({
       message: "User registered successfully!",
-      data: user,
+      data: userResponse,
     });
   } catch (error) {
     res.status(400).json({
       error: error.message || "Failed to create user",
+    });
+  }
+});
+
+// Login
+app.post("/login", async (req, res) => {
+  try {
+    validateLogIn(req);
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      throw new Error("Invalid credentials!");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      throw new Error("Invalid credentials!");
+    }
+
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      message: "User logged in successfully!",
+      data: userResponse,
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message || "Failed to login user",
     });
   }
 });
