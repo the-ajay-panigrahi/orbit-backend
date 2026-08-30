@@ -1,15 +1,36 @@
-const adminAuth = (req, res, next) => {
-  console.log("Admin Auth middleware running!");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
-  const token = "xyz";
-  const adminUser = token === "xyz";
-  if (!adminUser) {
-    return res.send("Error");
-  } else {
+const auth = async (req, res, next) => {
+  try {
+    const { token } = req.cookies || {};
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: "Please authenticate! No token found." });
+    }
+
+    const decodedData = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    const userId = decodedData._id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found!" });
+    }
+
+    req.user = user;
+
     next();
+  } catch (error) {
+    res.status(401).json({
+      error: error.message || "Invalid or expired token!",
+    });
   }
 };
 
 module.exports = {
-  adminAuth,
+  auth,
 };
