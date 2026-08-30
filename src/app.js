@@ -5,8 +5,7 @@ const User = require("./models/user");
 const { validateSignUp, validateLogIn } = require("./utils/validation");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
-const { auth } = require("./middlewares/auth");
-
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 const PORT = process.env.PORT || 7777;
@@ -86,7 +85,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", auth, async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
     const user = req.user;
     const userResponse = user.toObject();
@@ -102,7 +101,6 @@ app.get("/profile", auth, async (req, res) => {
     });
   }
 });
-
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
