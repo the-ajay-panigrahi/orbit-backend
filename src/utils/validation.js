@@ -40,17 +40,17 @@ const validateProfileEditData = (req) => {
 };
 
 const validateProfilePasswordData = (req) => {
-  const { password } = req.body;
+  const { oldPassword, newPassword } = req.body;
 
-  if (!password) {
-    throw new Error("No password exists");
+  if (!oldPassword || !newPassword) {
+    throw new Error("No old and new password exists");
+  } else if (oldPassword === newPassword) {
+    throw new Error("New password cannot be same as old password!");
   }
 
-  if (!validator.isStrongPassword(password)) {
+  if (!validator.isStrongPassword(newPassword)) {
     throw new Error("Password is not strong");
   }
-
-  return true;
 };
 
 module.exports = {
