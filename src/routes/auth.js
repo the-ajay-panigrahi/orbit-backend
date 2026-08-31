@@ -77,6 +77,7 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
+// Logout
 authRouter.post("/logout", (req, res) => {
   res
     .cookie("token", null, {
