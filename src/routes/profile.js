@@ -1,6 +1,10 @@
 const express = require("express");
 const { userAuth } = require("../middlewares/auth");
-const { validateProfileEditData } = require("../utils/validation");
+const {
+  validateProfileEditData,
+  validateProfilePasswordData,
+} = require("../utils/validation");
+const bcrypt = require("bcrypt");
 
 const profileRouter = express.Router();
 
@@ -46,6 +50,27 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     res.status(400).json({
       error: error.message || "Failed to update profile",
     });
+  }
+});
+
+profileRouter.patch("/profile/password", userAuth, async (req, res) => {
+  try {
+    validateProfilePasswordData(req);
+
+    const user = req.user;
+
+    const passwordHash = await bcrypt.hash(req.body.password, 10);
+
+    user.password = passwordHash;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password updated successfully!",
+    });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Failed to update password" });
   }
 });
 
