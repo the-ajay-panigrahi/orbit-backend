@@ -26,4 +26,39 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   }
 });
 
+userRouter.get("/user/connections", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    const allConnections = await ConnectionRequest.find({
+      $or: [
+        { fromUserId: loggedInUser._id, status: "accepted" },
+        { toUserId: loggedInUser._id, status: "accepted" },
+      ],
+    })
+      .populate(
+        "fromUserId",
+        "firstName lastName age skills about profilePictureUrl lookingFor gender",
+      )
+      .populate(
+        "toUserId",
+        "firstName lastName age skills about profilePictureUrl lookingFor gender",
+      );
+
+    const data = allConnections.map((user) => {
+      if (user.fromUserId.equals(loggedInUser._id)) {
+        return user.toUserId;
+      }
+      return user.fromUserId;
+    });
+
+    res.status(200).json({
+      message: "Fetched all connections successfully!!",
+      data,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = userRouter;
