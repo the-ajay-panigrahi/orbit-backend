@@ -4,6 +4,7 @@ const ConnectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
 const app = express();
 const PORT = process.env.PORT || 7777;
@@ -13,6 +14,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
+app.use("/", requestRouter);
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
