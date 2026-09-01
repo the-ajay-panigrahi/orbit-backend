@@ -1,6 +1,9 @@
 const express = require("express");
 const ConnectionRequest = require("../models/connection");
-const { validateConnectionSendRequest } = require("../utils/validation");
+const {
+  validateConnectionSendRequest,
+  validateConnectionReviewRequest,
+} = require("../utils/validation");
 const { userAuth } = require("../middlewares/auth");
 
 const requestRouter = express.Router();
@@ -36,7 +39,40 @@ requestRouter.post(
         data,
       });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Failed to send request" });
+      res
+        .status(400)
+        .json({ error: error.message || "Failed to send request" });
+    }
+  },
+);
+
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      validateConnectionReviewRequest(req);
+
+      const { status, requestId } = req.params;
+      const loggedInUser = req.user;
+
+      const connectionRequest = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+
+      if (!connectionRequest) {
+        throw new Error("Connection request doesnot exist!!");
+      }
+
+      connectionRequest.status = status;
+
+      await connectionRequest.save();
+
+      res.status(200).json({ message: "Connection request " + status });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   },
 );

@@ -85,10 +85,20 @@ const validateConnectionSendRequest = async (req) => {
   return toUser;
 };
 
+const validateConnectionReviewRequest = (req) => {
+  const allowedStatus = ["accepted", "rejected"];
+  const isEditAllowed = allowedStatus.includes(req.params.status);
+
+  if (!isEditAllowed) {
+    throw new Error("Invalid status");
+  }
+};
+
 module.exports = {
   validateSignUp,
   validateLogIn,
   validateProfileEditData,
   validateProfilePasswordData,
   validateConnectionSendRequest,
+  validateConnectionReviewRequest,
 };
