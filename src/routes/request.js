@@ -2,6 +2,7 @@ const express = require("express");
 const ConnectionRequest = require("../models/connection");
 const { validateConnectionSendRequest } = require("../utils/validation");
 const { userAuth } = require("../middlewares/auth");
+
 const requestRouter = express.Router();
 
 requestRouter.post(
@@ -9,7 +10,6 @@ requestRouter.post(
   userAuth,
   async (req, res) => {
     try {
-      await validateConnectionSendRequest(req);
       const toUser = await validateConnectionSendRequest(req);
 
       const fromUserId = req.user._id;
@@ -17,7 +17,6 @@ requestRouter.post(
       const status = req.params.status;
 
       if (fromUserId.equals(toUserId)) {
-        throw new Error("Cannot send connection request to yourself!!");
         throw new Error("Cannot send connection request to yourself!");
       }
 
@@ -27,13 +26,9 @@ requestRouter.post(
         status,
       });
 
-      const result = await connectionRequest.save();
       const data = await connectionRequest.save();
 
       res.status(200).json({
-        message: "Connection request sent successfully!",
-        data: connectionRequest,
-        result: result,
         message:
           status === "interested"
             ? `${req.user.firstName} is interested in ${toUser.firstName}`
@@ -41,7 +36,6 @@ requestRouter.post(
         data,
       });
     } catch (error) {
-      res.status(400).json({ error: error.message });
       res.status(400).json({ error: error.message || "Failed to send request" });
     }
   },

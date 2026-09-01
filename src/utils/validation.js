@@ -1,5 +1,4 @@
 const validator = require("validator");
-const { findById } = require("../models/user");
 const User = require("../models/user");
 const ConnectionRequest = require("../models/connection");
 
@@ -61,15 +60,9 @@ const validateConnectionSendRequest = async (req) => {
   const isAllowed = allowedStatus.includes(req.params.status);
 
   if (!isAllowed) {
-    throw new Error("Invalid status!");
     throw new Error("Invalid status: " + req.params.status);
   }
-  const toUserId = await User.findById(req.params.toUserId);
 
-  if (!toUserId) {
-    throw new Error(
-      "The person to whom the connection request is send...he doesnot exist!",
-    );
   const toUser = await User.findById(req.params.toUserId);
 
   if (!toUser) {
@@ -80,8 +73,6 @@ const validateConnectionSendRequest = async (req) => {
 
   const existingConnectionRequest = await ConnectionRequest.findOne({
     $or: [
-      { fromUserId: loggedInUser._id, toUserId: toUserId._id },
-      { fromUserId: toUserId._id, toUserId: loggedInUser._id },
       { fromUserId: loggedInUser._id, toUserId: toUser._id },
       { fromUserId: toUser._id, toUserId: loggedInUser._id },
     ],
