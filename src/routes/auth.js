@@ -23,6 +23,13 @@ authRouter.post("/signup", async (req, res) => {
 
     await user.save();
 
+    const jsonWebToken = user.generateJsonWebToken();
+
+    res.cookie("token", jsonWebToken, {
+      expires: new Date(Date.now() + 24 * 3600000),
+      httpOnly: true,
+    });
+
     const userResponse = user.toObject();
     delete userResponse.password;
 
