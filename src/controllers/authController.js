@@ -2,26 +2,21 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { validateSignUp, validateLogIn } = require("../utils/validation");
 
-// Signup Controller
 const signup = async (req, res) => {
   try {
     validateSignUp(req);
 
     const { firstName, lastName, email, password } = req.body;
-
     const passwordHash = await bcrypt.hash(password, 10);
-
     const user = new User({
       firstName,
       lastName,
       email,
       password: passwordHash,
     });
-
     await user.save();
 
     const jsonWebToken = user.generateJsonWebToken();
-
     res.cookie("token", jsonWebToken, {
       expires: new Date(Date.now() + 24 * 3600000),
       httpOnly: true,
@@ -41,27 +36,22 @@ const signup = async (req, res) => {
   }
 };
 
-// Login Controller
 const login = async (req, res) => {
   try {
     validateLogIn(req);
 
     const { email, password } = req.body;
-
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-
     if (!user) {
       throw new Error("Invalid credentials!");
     }
 
     const isPasswordValid = await user.checkPassword(password);
-
     if (!isPasswordValid) {
       throw new Error("Invalid credentials!");
     }
 
     const jsonWebToken = user.generateJsonWebToken();
-
     const userResponse = user.toObject();
     delete userResponse.password;
 
@@ -81,7 +71,6 @@ const login = async (req, res) => {
   }
 };
 
-// Logout Controller
 const logout = (req, res) => {
   res
     .cookie("token", null, {

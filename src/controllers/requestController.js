@@ -4,7 +4,6 @@ const {
   validateConnectionReviewRequest,
 } = require("../utils/validation");
 
-// Send Connection Request Controller (interested / ignored)
 const sendConnectionRequest = async (req, res) => {
   try {
     const toUser = await validateConnectionSendRequest(req);
@@ -22,7 +21,6 @@ const sendConnectionRequest = async (req, res) => {
       toUserId,
       status,
     });
-
     const data = await connectionRequest.save();
 
     res.status(200).json({
@@ -39,7 +37,6 @@ const sendConnectionRequest = async (req, res) => {
   }
 };
 
-// Review Connection Request Controller (accepted / rejected)
 const reviewConnectionRequest = async (req, res) => {
   try {
     validateConnectionReviewRequest(req);
@@ -58,7 +55,6 @@ const reviewConnectionRequest = async (req, res) => {
     }
 
     connectionRequest.status = status;
-
     await connectionRequest.save();
 
     res.status(200).json({ message: "Connection request " + status });

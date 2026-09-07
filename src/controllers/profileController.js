@@ -4,7 +4,6 @@ const {
 } = require("../utils/validation");
 const bcrypt = require("bcrypt");
 
-// View Profile Controller
 const viewProfile = async (req, res) => {
   try {
     const user = req.user;
@@ -22,7 +21,6 @@ const viewProfile = async (req, res) => {
   }
 };
 
-// Edit Profile Controller
 const editProfile = async (req, res) => {
   try {
     if (!validateProfileEditData(req)) {
@@ -30,11 +28,9 @@ const editProfile = async (req, res) => {
     }
 
     const loggedInUser = req.user;
-
     Object.keys(req.body).forEach((key) => {
       loggedInUser[key] = req.body[key];
     });
-
     await loggedInUser.save();
 
     const userResponse = loggedInUser.toObject();
@@ -51,7 +47,6 @@ const editProfile = async (req, res) => {
   }
 };
 
-// Update Password Controller
 const updatePassword = async (req, res) => {
   try {
     validateProfilePasswordData(req);
@@ -65,7 +60,6 @@ const updatePassword = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-
     user.password = passwordHash;
     await user.save();
 

@@ -1,7 +1,6 @@
 const ConnectionRequest = require("../models/connection");
 const User = require("../models/user");
 
-// Get Pending Received Connection Requests
 const getReceivedRequests = async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -25,7 +24,6 @@ const getReceivedRequests = async (req, res) => {
   }
 };
 
-// Get All Accepted Connections
 const getConnections = async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -61,7 +59,6 @@ const getConnections = async (req, res) => {
   }
 };
 
-// Get Paginated Feed for Current User
 const getFeed = async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -75,22 +72,17 @@ const getFeed = async (req, res) => {
 
     const myConnectionRequests = await ConnectionRequest.find({
       $or: [
-        {
-          fromUserId: loggedInUser._id,
-        },
-        {
-          toUserId: loggedInUser._id,
-        },
+        { fromUserId: loggedInUser._id },
+        { toUserId: loggedInUser._id },
       ],
     }).select("fromUserId toUserId");
 
+    // Exclude self and any user with an existing connection (any status)
     const hideUsersFromFeed = new Set();
-
-    myConnectionRequests.forEach((individualConnection) => {
-      hideUsersFromFeed.add(individualConnection.fromUserId.toString());
-      hideUsersFromFeed.add(individualConnection.toUserId.toString());
+    myConnectionRequests.forEach((conn) => {
+      hideUsersFromFeed.add(conn.fromUserId.toString());
+      hideUsersFromFeed.add(conn.toUserId.toString());
     });
-
     hideUsersFromFeed.add(loggedInUser._id.toString());
 
     const userFeed = await User.find({
@@ -102,9 +94,10 @@ const getFeed = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res
-      .status(200)
-      .json({ message: "User feed fetched successfully!", data: userFeed });
+    res.status(200).json({
+      message: "User feed fetched successfully!",
+      data: userFeed,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
