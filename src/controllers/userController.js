@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const ConnectionRequest = require("../models/connection");
 const User = require("../models/user");
 
@@ -85,13 +86,27 @@ const getFeed = async (req, res) => {
     });
     hideUsersFromFeed.add(loggedInUser._id.toString());
 
+    // Also exclude any IDs currently loaded in the client's active deck to prevent duplicate or skipped items
+    if (req.query.exclude) {
+      const excludeList = req.query.exclude.split(",");
+      excludeList.forEach((id) => {
+        const trimmed = id.trim();
+        if (mongoose.Types.ObjectId.isValid(trimmed)) {
+          hideUsersFromFeed.add(trimmed);
+        }
+      });
+    }
+
+    // When exclude is provided, dynamic set exclusion already offsets pagination; otherwise fallback to skip
+    const effectiveSkip = req.query.exclude ? 0 : skip;
+
     const userFeed = await User.find({
       _id: { $nin: Array.from(hideUsersFromFeed) },
     })
       .select(
         "_id firstName lastName about profilePictureUrl skills lookingFor age gender",
       )
-      .skip(skip)
+      .skip(effectiveSkip)
       .limit(limit);
 
     res.status(200).json({
