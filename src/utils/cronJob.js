@@ -18,7 +18,7 @@ cron.schedule("0 8 * * *", async () => {
         $gte: yesterdayStart,
         $lte: yesterdayEnd,
       },
-    }).populate("fromUserId toUserId");
+    }).populate("toUserId", "email");
 
     const listOfEmails = [
       ...new Set(
