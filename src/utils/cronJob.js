@@ -45,4 +45,6 @@ cron.schedule("0 8 * * *", async () => {
   } catch (error) {
     console.error("[Cron Job] Error executing scheduled reminder job:", error);
   }
+}, {
+  timezone: "Asia/Kolkata",
 });
