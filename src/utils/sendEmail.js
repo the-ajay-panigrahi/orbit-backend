@@ -91,7 +91,51 @@ const sendConnectionRequestEmail = async (fromUser, toUser) => {
   }
 };
 
+const sendDailyReminderEmail = async (toEmail) => {
+  try {
+    const subject = `You have pending connection requests waiting on Orbit! 🪐`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; color: #1f2937;">
+        <div style="margin-bottom: 20px;">
+          <span style="font-size: 22px; font-weight: 700; color: #111827; letter-spacing: -0.5px;">Orbit 🪐</span>
+        </div>
+        <h2 style="font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 12px;">
+          You have pending connection requests!
+        </h2>
+        <p style="font-size: 15px; line-height: 1.6; color: #4b5563; margin-bottom: 24px;">
+          Founders and builders on Orbit are waiting to connect with you. Log in to your account and review your pending connection requests.
+        </p>
+        <div style="margin-bottom: 28px;">
+          <a href="https://withorbit.tech/requests" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">
+            Review Requests on Orbit
+          </a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+          You received this email because you have an account on <a href="https://withorbit.tech" style="color: #6b7280; text-decoration: underline;">Orbit</a>.
+        </p>
+      </div>
+    `;
+    const textBody = `Hi there,\n\nYou have pending connection requests waiting on Orbit!\n\nReview them here: https://withorbit.tech/requests\n\n- Orbit Team`;
+
+    // In SES Sandbox mode, only verified email can receive emails
+    const recipient =
+      process.env.NODE_ENV === "production"
+        ? toEmail
+        : "ajaybpanigrahi@gmail.com";
+    const response = await run(recipient, subject, htmlBody, textBody);
+    console.log(
+      "Daily Reminder Email Sent Successfully! MessageId:",
+      response?.MessageId,
+    );
+    return response;
+  } catch (emailErr) {
+    console.error("Daily Reminder SES Error (non-blocking):", emailErr.message);
+  }
+};
+
 module.exports = {
   run,
   sendConnectionRequestEmail,
+  sendDailyReminderEmail,
 };
