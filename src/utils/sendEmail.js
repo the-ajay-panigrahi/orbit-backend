@@ -41,7 +41,7 @@ const run = async (
   htmlBody,
   textBody,
 ) => {
-  const fromAddress = process.env.SES_FROM_EMAIL || "no-reply@withorbit.tech";
+  const fromAddress = process.env.SES_FROM_EMAIL || "noreply@withorbit.tech";
   const sendEmailCommand = createSendEmailCommand(
     toAddress,
     fromAddress,
@@ -50,16 +50,7 @@ const run = async (
     textBody,
   );
 
-  try {
-    return await sesClient.send(sendEmailCommand);
-  } catch (caught) {
-    if (caught instanceof Error && caught.name === "MessageRejected") {
-      /** @type { import('@aws-sdk/client-ses').MessageRejected} */
-      const messageRejectedError = caught;
-      return messageRejectedError;
-    }
-    throw caught;
-  }
+  return await sesClient.send(sendEmailCommand);
 };
 
 const sendConnectionRequestEmail = async (fromUser, toUser) => {
@@ -90,11 +81,12 @@ const sendConnectionRequestEmail = async (fromUser, toUser) => {
     `;
     const textBody = `Hi ${toUser.firstName},\n\n${fromUser.firstName} ${fromUser.lastName} sent you a connection request on Orbit.\n\nView it here: https://withorbit.tech/requests\n\n- Orbit Team`;
 
-    const recipientEmail = toUser.email || "ajaybpanigrahi@gmail.com";
+    // In SES Sandbox mode, only verified emails can receive emails
+    const recipientEmail = "ajaybpanigrahi@gmail.com";
     const response = await run(recipientEmail, subject, htmlBody, textBody);
     console.log(
-      "SES Email Sent Successfully:",
-      response?.MessageId || response,
+      "SES Email Sent Successfully! MessageId:",
+      response?.MessageId,
     );
     return response;
   } catch (emailErr) {
