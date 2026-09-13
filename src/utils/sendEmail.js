@@ -84,10 +84,7 @@ const sendConnectionRequestEmail = async (fromUser, toUser) => {
     // In SES Sandbox mode, only verified emails can receive emails
     const recipientEmail = "ajaybpanigrahi@gmail.com";
     const response = await run(recipientEmail, subject, htmlBody, textBody);
-    console.log(
-      "SES Email Sent Successfully! MessageId:",
-      response?.MessageId,
-    );
+    console.log("SES Email Sent Successfully! MessageId:", response?.MessageId);
     return response;
   } catch (emailErr) {
     console.error("SES Email Sending Error (non-blocking):", emailErr.message);
