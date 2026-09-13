@@ -41,7 +41,7 @@ const run = async (
   htmlBody,
   textBody,
 ) => {
-  const fromAddress = process.env.SES_FROM_EMAIL || "noreply@withorbit.tech";
+  const fromAddress = "noreply@withorbit.tech";
   const sendEmailCommand = createSendEmailCommand(
     toAddress,
     fromAddress,
