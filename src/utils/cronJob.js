@@ -36,7 +36,10 @@ cron.schedule("0 8 * * *", async () => {
       try {
         await sendDailyReminderEmail(email);
       } catch (error) {
-        console.error(`[Cron Job] Failed to send reminder to ${email}:`, error.message);
+        console.error(
+          `[Cron Job] Failed to send reminder to ${email}:`,
+          error.message,
+        );
       }
     }
   } catch (error) {
