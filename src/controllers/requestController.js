@@ -3,6 +3,7 @@ const {
   validateConnectionSendRequest,
   validateConnectionReviewRequest,
 } = require("../utils/validation");
+const { sendConnectionRequestEmail } = require("../utils/sendEmail");
 
 const sendConnectionRequest = async (req, res) => {
   try {
@@ -23,6 +24,10 @@ const sendConnectionRequest = async (req, res) => {
     });
     const data = await connectionRequest.save();
 
+    if (status === "interested") {
+      sendConnectionRequestEmail(req.user, toUser);
+    }
+
     res.status(200).json({
       message:
         status === "interested"
@@ -31,9 +36,7 @@ const sendConnectionRequest = async (req, res) => {
       data,
     });
   } catch (error) {
-    res
-      .status(400)
-      .json({ error: error.message || "Failed to send request" });
+    res.status(400).json({ error: error.message || "Failed to send request" });
   }
 };
 
