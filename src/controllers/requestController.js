@@ -24,9 +24,10 @@ const sendConnectionRequest = async (req, res) => {
     });
     const data = await connectionRequest.save();
 
-    if (status === "interested") {
-      sendConnectionRequestEmail(req.user, toUser);
-    }
+    // Real-time email disabled to prevent spamming; handled by daily cron digest
+    // if (status === "interested") {
+    //   sendConnectionRequestEmail(req.user, toUser);
+    // }
 
     res.status(200).json({
       message:
