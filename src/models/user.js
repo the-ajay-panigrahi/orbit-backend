@@ -90,6 +90,16 @@ const userSchema = new mongoose.Schema(
       },
       default: "basic",
     },
+    discoveryQuota: {
+      count: {
+        type: Number,
+        default: 0,
+      },
+      lastReset: {
+        type: Date,
+        default: Date.now,
+      },
+    },
   },
   {
     strict: true,

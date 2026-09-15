@@ -67,11 +67,24 @@ const getFeed = async (req, res) => {
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 10;
 
+    // 24-hour rolling reset check for feed discovery quota
+    const now = new Date();
+    const lastReset = loggedInUser.discoveryQuota?.lastReset
+      ? new Date(loggedInUser.discoveryQuota.lastReset)
+      : now;
+    const hoursElapsed = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
+
+    let currentQuotaCount = loggedInUser.discoveryQuota?.count || 0;
+    if (hoursElapsed >= 24) {
+      currentQuotaCount = 0;
+      await User.findByIdAndUpdate(loggedInUser._id, {
+        $set: { "discoveryQuota.count": 0, "discoveryQuota.lastReset": now },
+      });
+    }
+
     // Tier-based daily discovery limits:
-    // Basic: 10 profiles (page 1 only)
-    // Pro: up to 50 profiles (pages 1 to 5)
-    // Premium: unlimited pagination
-    if (plan === "basic" && page > 1) {
+    // Basic: 10 profiles max (one-time / page 1 only)
+    if (plan === "basic" && (page > 1 || currentQuotaCount >= 10)) {
       return res.status(200).json({
         message:
           "Basic membership is limited to 10 profiles. Upgrade to Pro or Premium for more!",
@@ -80,10 +93,11 @@ const getFeed = async (req, res) => {
       });
     }
 
-    if (plan === "pro" && page > 5) {
+    // Pro: up to 50 profiles per 24 hours (resets every 24 hours, does not accumulate)
+    if (plan === "pro" && currentQuotaCount >= 50) {
       return res.status(200).json({
         message:
-          "Pro membership is limited to 50 profiles per day. Upgrade to Premium for unlimited discovery!",
+          "Pro membership is limited to 50 profiles per 24 hours. Your limit resets after 24 hours. Upgrade to Premium for unlimited discovery!",
         data: [],
         isLimitReached: true,
       });
@@ -131,6 +145,13 @@ const getFeed = async (req, res) => {
       )
       .skip(effectiveSkip)
       .limit(limit);
+
+    // Track quota usage for Basic and Pro members
+    if (userFeed.length > 0 && plan !== "premium") {
+      await User.findByIdAndUpdate(loggedInUser._id, {
+        $inc: { "discoveryQuota.count": userFeed.length },
+      });
+    }
 
     res.status(200).json({
       message: "User feed fetched successfully!",
