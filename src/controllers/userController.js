@@ -63,8 +63,31 @@ const getConnections = async (req, res) => {
 const getFeed = async (req, res) => {
   try {
     const loggedInUser = req.user;
+    const plan = loggedInUser.membershipType || "basic";
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 10;
+
+    // Tier-based daily discovery limits:
+    // Basic: 10 profiles (page 1 only)
+    // Pro: up to 50 profiles (pages 1 to 5)
+    // Premium: unlimited pagination
+    if (plan === "basic" && page > 1) {
+      return res.status(200).json({
+        message:
+          "Basic membership is limited to 10 profiles. Upgrade to Pro or Premium for more!",
+        data: [],
+        isLimitReached: true,
+      });
+    }
+
+    if (plan === "pro" && page > 5) {
+      return res.status(200).json({
+        message:
+          "Pro membership is limited to 50 profiles per day. Upgrade to Premium for unlimited discovery!",
+        data: [],
+        isLimitReached: true,
+      });
+    }
 
     page = page < 1 ? 1 : page;
     limit = limit > 50 ? 50 : limit;
@@ -104,7 +127,7 @@ const getFeed = async (req, res) => {
       _id: { $nin: Array.from(hideUsersFromFeed) },
     })
       .select(
-        "_id firstName lastName about profilePictureUrl skills lookingFor age gender",
+        "_id firstName lastName about profilePictureUrl skills lookingFor age gender membershipType",
       )
       .skip(effectiveSkip)
       .limit(limit);

@@ -82,6 +82,14 @@ const userSchema = new mongoose.Schema(
         message: "A user can have a maximum of 30 skills",
       },
     },
+    membershipType: {
+      type: String,
+      enum: {
+        values: ["basic", "pro", "premium"],
+        message: "{VALUE} is invalid membership type",
+      },
+      default: "basic",
+    },
   },
   {
     strict: true,

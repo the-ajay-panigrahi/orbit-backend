@@ -1,8 +1,15 @@
-const express = require("express")
-const { createPaymentOrder } = require("../controllers/paymentController")
-const { userAuth } = require("../middlewares/auth")
-const paymentRouter = express.Router()
+const express = require("express");
+const {
+  createPaymentOrder,
+  verifyPayment,
+  paymentWebhook,
+} = require("../controllers/paymentController");
+const { userAuth } = require("../middlewares/auth");
 
-paymentRouter.post("/payment/create", userAuth, createPaymentOrder)
+const paymentRouter = express.Router();
 
-module.exports = paymentRouter
+paymentRouter.post("/payment/create", userAuth, createPaymentOrder);
+paymentRouter.post("/payment/verify", userAuth, verifyPayment);
+paymentRouter.post("/payment/webhook", paymentWebhook);
+
+module.exports = paymentRouter;
