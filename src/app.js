@@ -8,6 +8,8 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const paymentRouter = require("./routes/payment");
+const { createServer } = require("http");
+const initializeSocket = require("./utils/socket");
 require("./utils/cronJob");
 
 const app = express();
@@ -39,10 +41,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
+const server = createServer(app);
+initializeSocket(server)
+
 ConnectDB()
   .then(() => {
     console.log("DB connection established successfully!");
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is successfully running on port ${PORT}`);
     });
   })
