@@ -6,6 +6,9 @@ const getChatMessages = async (req, res) => {
     const { targetUserId } = req.params;
     const currentUserId = req.user._id;
 
+    const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+    const skip = parseInt(req.query.skip, 10) || 0;
+
     const connection = await ConnectionRequest.findOne({
       $or: [
         { fromUserId: currentUserId, toUserId: targetUserId, status: "accepted" },
@@ -30,9 +33,31 @@ const getChatMessages = async (req, res) => {
         messages: [],
       });
       await chat.save();
+      return res.status(200).json({
+        _id: chat._id,
+        participants: chat.participants,
+        messages: [],
+        totalMessages: 0,
+        hasMore: false,
+      });
     }
 
-    res.status(200).json(chat);
+    const allMessages = chat.messages || [];
+    const totalMessages = allMessages.length;
+
+    // Slicing from end: skip=0, limit=25 returns newest 25
+    const endIndex = Math.max(0, totalMessages - skip);
+    const startIndex = Math.max(0, endIndex - limit);
+    const paginatedMessages = allMessages.slice(startIndex, endIndex);
+    const hasMore = startIndex > 0;
+
+    res.status(200).json({
+      _id: chat._id,
+      participants: chat.participants,
+      messages: paginatedMessages,
+      totalMessages,
+      hasMore,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message || "Failed to fetch chat messages" });
   }
