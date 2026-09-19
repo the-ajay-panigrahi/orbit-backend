@@ -4,6 +4,8 @@ const { socketAuth } = require("../middlewares/socketAuth");
 const Chat = require("../models/chat");
 const ConnectionRequest = require("../models/connection");
 
+const onlineUsers = new Map(); // Map<userId, Set<socketId>>
+
 const getSecretRoomId = (userId1, userId2) => {
     return crypto
         .createHash("sha256")
@@ -23,6 +25,25 @@ const initializeSocket = (server) => {
     io.use(socketAuth);
 
     io.on("connection", (socket) => {
+        const currentUserId = socket.user?._id?.toString();
+        if (currentUserId) {
+            if (!onlineUsers.has(currentUserId)) {
+                onlineUsers.set(currentUserId, new Set());
+            }
+            onlineUsers.get(currentUserId).add(socket.id);
+
+            // Notify connected peers that this user is online
+            io.emit("userOnline", { userId: currentUserId });
+        }
+
+        socket.on("checkUserOnline", ({ targetUserId }, callback) => {
+            const isOnline = onlineUsers.has(targetUserId) && onlineUsers.get(targetUserId).size > 0;
+            if (typeof callback === "function") {
+                callback({ isOnline });
+            } else {
+                socket.emit("userStatus", { userId: targetUserId, isOnline });
+            }
+        });
         socket.on("joinChat", async ({ firstName, currentUserId, targetUserId }) => {
             const senderId = socket.user?._id?.toString() || currentUserId;
             const senderName = socket.user?.firstName || firstName;
@@ -108,7 +129,16 @@ const initializeSocket = (server) => {
             socket.to(roomId).emit("userStoppedTyping", { senderId });
         });
 
-        socket.on("disconnect", () => { });
+        socket.on("disconnect", () => {
+            if (currentUserId && onlineUsers.has(currentUserId)) {
+                const userSockets = onlineUsers.get(currentUserId);
+                userSockets.delete(socket.id);
+                if (userSockets.size === 0) {
+                    onlineUsers.delete(currentUserId);
+                    io.emit("userOffline", { userId: currentUserId });
+                }
+            }
+        });
     });
 };
 
