@@ -82,33 +82,34 @@ const getFeed = async (req, res) => {
       });
     }
 
-    // Tier-based daily discovery limits:
-    // Basic: 10 profiles max (one-time / page 1 only)
-    if (plan === "basic") {
-      const remainingQuota = 10 - currentQuotaCount;
-      if (page > 1 || remainingQuota <= 0) {
-        return res.status(200).json({
-          message:
-            "Basic membership is limited to 10 profiles. Upgrade to Pro or Premium for more!",
-          data: [],
-          isLimitReached: true,
-        });
+    // Tier-based daily discovery limits (unlocked in local dev for testing all profiles)
+    const isDev = process.env.NODE_ENV !== "production";
+    if (!isDev) {
+      if (plan === "basic") {
+        const remainingQuota = 25 - currentQuotaCount;
+        if (remainingQuota <= 0) {
+          return res.status(200).json({
+            message:
+              "Basic membership is limited to 25 profiles per day. Upgrade to Pro or Premium for more!",
+            data: [],
+            isLimitReached: true,
+          });
+        }
+        limit = Math.min(limit, remainingQuota);
       }
-      limit = Math.min(limit, remainingQuota);
-    }
 
-    // Pro: up to 50 profiles per 24 hours (resets every 24 hours, does not accumulate)
-    if (plan === "pro") {
-      const remainingQuota = 50 - currentQuotaCount;
-      if (remainingQuota <= 0) {
-        return res.status(200).json({
-          message:
-            "Pro membership is limited to 50 profiles per 24 hours. Your limit resets after 24 hours. Upgrade to Premium for unlimited discovery!",
-          data: [],
-          isLimitReached: true,
-        });
+      if (plan === "pro") {
+        const remainingQuota = 100 - currentQuotaCount;
+        if (remainingQuota <= 0) {
+          return res.status(200).json({
+            message:
+              "Pro membership is limited to 100 profiles per 24 hours. Upgrade to Premium for unlimited discovery!",
+            data: [],
+            isLimitReached: true,
+          });
+        }
+        limit = Math.min(limit, remainingQuota);
       }
-      limit = Math.min(limit, remainingQuota);
     }
 
     page = page < 1 ? 1 : page;
