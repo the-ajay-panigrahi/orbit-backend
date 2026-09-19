@@ -1,5 +1,6 @@
 const Chat = require("../models/chat");
 const ConnectionRequest = require("../models/connection");
+const User = require("../models/user");
 
 const getChatMessages = async (req, res) => {
   try {
@@ -20,6 +21,10 @@ const getChatMessages = async (req, res) => {
       return res.status(403).json({ error: "You can only chat with accepted connections." });
     }
 
+    const targetUser = await User.findById(targetUserId).select(
+      "firstName lastName profilePictureUrl about skills"
+    );
+
     let chat = await Chat.findOne({
       participants: { $all: [currentUserId, targetUserId] },
     }).populate({
@@ -37,6 +42,7 @@ const getChatMessages = async (req, res) => {
         _id: chat._id,
         participants: chat.participants,
         messages: [],
+        targetUser,
         totalMessages: 0,
         hasMore: false,
       });
@@ -55,6 +61,7 @@ const getChatMessages = async (req, res) => {
       _id: chat._id,
       participants: chat.participants,
       messages: paginatedMessages,
+      targetUser,
       totalMessages,
       hasMore,
     });

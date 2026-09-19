@@ -118,7 +118,10 @@ const initializeSocket = (server) => {
             const senderId = socket.user?._id?.toString();
             if (!senderId || !targetUserId) return;
             const roomId = getSecretRoomId(senderId, targetUserId);
-            socket.to(roomId).emit("userTyping", { senderId });
+            socket.to(roomId).emit("userTyping", {
+                senderId,
+                firstName: socket.user?.firstName || "Someone",
+            });
         });
 
         socket.on("stopTyping", ({ targetUserId }) => {
