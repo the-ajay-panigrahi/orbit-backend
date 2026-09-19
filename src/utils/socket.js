@@ -14,9 +14,15 @@ const getSecretRoomId = (userId1, userId2) => {
 };
 
 const initializeSocket = (server) => {
+    const allowedOrigins = [
+        "http://localhost:5173",
+        "https://withorbit.tech",
+        process.env.FRONTEND_URL,
+    ].filter(Boolean);
+
     const io = socket(server, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: allowedOrigins,
             credentials: true,
         }
     });
