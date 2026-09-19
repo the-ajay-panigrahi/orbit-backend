@@ -8,6 +8,7 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const paymentRouter = require("./routes/payment");
+const chatRouter = require("./routes/chat");
 const { createServer } = require("http");
 const initializeSocket = require("./utils/socket");
 require("./utils/cronJob");
@@ -35,6 +36,7 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", paymentRouter);
+app.use("/", chatRouter);
 
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err.stack || err);
