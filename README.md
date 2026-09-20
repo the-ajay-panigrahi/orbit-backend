@@ -9,6 +9,12 @@ Production-ready REST API, WebSockets messaging engine, automated cron scheduler
 - **Production URL:** [https://withorbit.tech/](https://withorbit.tech/)
 - **Base API Endpoint:** `https://withorbit.tech/api`
 
+> [!NOTE]
+> **Production Deployment & Cloud Hosting Notice**
+> The complete production stack was initially provisioned, battle-tested, and verified on bare-metal **AWS Cloud Infrastructure (AWS EC2 Ubuntu, Nginx reverse proxy, PM2 daemon, AWS SES, and Cloudflare edge SSL)**.
+> 
+> To optimize personal AWS compute credits while maintaining 100% 24/7 uptime for recruiters and peers, the active production deployment is hosted on **Render** (Backend) and **Vercel** (Frontend), with MongoDB Atlas and AWS SES operating continuously. Both deployment topologies share the exact same codebase, domain ([withorbit.tech](https://withorbit.tech/)), and architecture.
+
 ---
 
 ## System Architecture
