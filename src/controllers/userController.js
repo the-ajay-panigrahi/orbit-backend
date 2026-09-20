@@ -67,30 +67,34 @@ const getFeed = async (req, res) => {
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 10;
 
-    // 24-hour rolling reset check for feed discovery quota
-    const now = new Date();
-    const lastReset = loggedInUser.discoveryQuota?.lastReset
-      ? new Date(loggedInUser.discoveryQuota.lastReset)
-      : now;
-    const hoursElapsed = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
-
     let currentQuotaCount = loggedInUser.discoveryQuota?.count || 0;
-    if (hoursElapsed >= 24) {
-      currentQuotaCount = 0;
-      await User.findByIdAndUpdate(loggedInUser._id, {
-        $set: { "discoveryQuota.count": 0, "discoveryQuota.lastReset": now },
-      });
+
+    // 24-hour rolling reset ONLY applies to Pro plan (resets every 24 hours, does not accumulate)
+    // Basic plan is strictly 10 profiles total (one-time) and does NOT renew
+    if (plan === "pro") {
+      const now = new Date();
+      const lastReset = loggedInUser.discoveryQuota?.lastReset
+        ? new Date(loggedInUser.discoveryQuota.lastReset)
+        : now;
+      const hoursElapsed = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
+
+      if (hoursElapsed >= 24) {
+        currentQuotaCount = 0;
+        await User.findByIdAndUpdate(loggedInUser._id, {
+          $set: { "discoveryQuota.count": 0, "discoveryQuota.lastReset": now },
+        });
+      }
     }
 
-    // Tier-based daily discovery limits (unlocked in local dev for testing all profiles)
+    // Tier-based discovery limits (unlocked in local dev for testing all profiles)
     const isDev = process.env.NODE_ENV !== "production";
     if (!isDev) {
       if (plan === "basic") {
-        const remainingQuota = 25 - currentQuotaCount;
-        if (remainingQuota <= 0) {
+        const remainingQuota = 10 - currentQuotaCount;
+        if (page > 1 || remainingQuota <= 0) {
           return res.status(200).json({
             message:
-              "Basic membership is limited to 25 profiles per day. Upgrade to Pro or Premium for more!",
+              "Basic membership is limited to 10 profiles total. Upgrade to Pro or Premium for more!",
             data: [],
             isLimitReached: true,
           });
@@ -99,11 +103,11 @@ const getFeed = async (req, res) => {
       }
 
       if (plan === "pro") {
-        const remainingQuota = 100 - currentQuotaCount;
+        const remainingQuota = 50 - currentQuotaCount;
         if (remainingQuota <= 0) {
           return res.status(200).json({
             message:
-              "Pro membership is limited to 100 profiles per 24 hours. Upgrade to Premium for unlimited discovery!",
+              "Pro membership is limited to 50 profiles per 24 hours. Your limit resets after 24 hours. Upgrade to Premium for unlimited discovery!",
             data: [],
             isLimitReached: true,
           });
