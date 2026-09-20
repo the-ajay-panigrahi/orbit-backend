@@ -39,34 +39,84 @@ flowchart TD
 
 ---
 
-## Cloud Infrastructure & DevOps Deployment
+## Interface & DevOps Walkthrough
 
-Orbit was provisioned, configured, and verified on bare-metal AWS cloud infrastructure:
+### 1. Feed Matchmaking & Profile Discovery
+Paginated discovery pipeline serving eligible builder cards while excluding self, existing connections, sent requests, and ignored profiles.
 
-### 1. AWS EC2 Virtual Machine
-Running Ubuntu on AWS EC2 (`t3.micro`, region `ap-south-1`) with continuous process monitoring via PM2.
+![Discovery Feed](./screenshots/feed-discovery.png)
+
+---
+
+### 2. Connection Lifecycle Management
+Structured two-way request handling with atomic database mutations for `interested`, `accepted`, `rejected`, and `ignored` statuses.
+
+![Requests Review](./screenshots/requests-review.png)
+
+---
+
+### 3. Mutual Connections Directory
+Indexed lookup for confirmed connections, exposing endpoints to initiate direct real-time communication channels.
+
+![Connections List](./screenshots/connections-list.png)
+
+---
+
+### 4. Razorpay Subscription & Webhook Processing
+Server-side order generation and cryptographic HMAC-SHA256 signature verification for tiered subscription upgrades.
+
+![Razorpay Modal Checkout](./screenshots/razorpay-checkout-modal.png)
+
+---
+
+### 5. AWS EC2 Cloud Infrastructure
+Production virtual machine provisioned on AWS EC2 (`t3.micro`, Ubuntu, region `ap-south-1`) with network security group ingress configuration.
 
 ![AWS EC2 Instance](./screenshots/aws-ec2-instance.png)
 
-### 2. Server Access & SSH Configuration
-Direct SSH terminal access with keypair validation, system performance checks, and environment isolation.
+---
+
+### 6. SSH Terminal Access & Server Administration
+Direct SSH terminal access with keypair validation, system performance monitoring, and production environment maintenance.
 
 ![AWS EC2 SSH Terminal](./screenshots/aws-ec2-ssh-terminal.png)
 
-### 3. PM2 Process Supervision & WebSocket Rooms
-PM2 daemon managing `orbit-backend` with zero-downtime reloads, automatic crash restarts, and real-time Socket.IO room lifecycle logging.
+---
+
+### 7. PM2 Process Supervision & Real-Time Socket Logging
+PM2 daemon managing `orbit-backend` with zero-downtime reloads, automatic crash recovery, and real-time Socket.IO room lifecycle logging.
 
 ![PM2 Service Logs](./screenshots/pm2-service-logs.png)
 
-### 4. Automated Daily Cron Worker & AWS SES Delivery
-Background worker scheduled via `node-cron` running daily at **08:00 AM IST** (`0 8 * * *`). It aggregates unreviewed `interested` connection requests from the previous 24 hours and delivers transactional email digests via **AWS SES**.
+---
+
+### 8. Automated Daily Cron Worker & AWS SES Delivery
+Background worker scheduled via `node-cron` running daily at **08:00 AM IST** (`0 8 * * *`), querying unreviewed requests and dispatching digests via **AWS SES**.
 
 ![AWS SES Email Delivery](./screenshots/aws-ses-email-delivery.png)
 
-### 5. Razorpay Payment Gateway & Cryptographic Verification
-Server-side order generation and HMAC-SHA256 signature verification supporting seamless tier upgrades.
+---
 
-![Razorpay Modal Checkout](./screenshots/razorpay-checkout-modal.png)
+## Technical Architecture
+
+- **Modular Express 5 Pipeline:** Structured micro-engine architecture featuring route isolation, asynchronous error boundaries, and centralized middleware dispatch.
+- **Normalized MongoDB Data Modeling:** Optimized Mongoose schemas with compound indexes (`[senderId, receiverId, status]`) for sub-25ms feed exclusion queries.
+- **Stateful WebSocket Cluster Management:** Socket.IO server orchestrating dynamic peer-to-peer room routing, presence tracking, and broadcast events with cookie-based handshake validation.
+- **Automated Cron Digest Worker:** `node-cron` daemon executing daily at 08:00 AM IST (`0 8 * * *`), isolating previous 24h pending connection requests with batch deduplication.
+- **Transactional Email Pipeline with AWS SES:** Direct integration with AWS Simple Email Service SDK for high-deliverability templated transactional alerts and digests.
+- **Cryptographic Webhook Verification:** HMAC-SHA256 signature verification comparing payload digests to secure payment callbacks and guarantee transaction idempotency.
+- **Stateless JWT Session Management:** Signed, HTTP-only, SameSite cookies with bcrypt salt rounds, eliminating CSRF and credential theft risks.
+- **Nginx Reverse Proxy & Duplex Streaming:** Tailored Nginx reverse proxy mapping `$http_upgrade` to `$connection_upgrade` with extended 24-hour timeout allocations.
+
+---
+
+## Key Engineering Challenges & Solutions
+
+- **Nginx Reverse Proxying for Cloudflare-Terminated WebSockets:** Configured Nginx with dynamic HTTP upgrade maps (`map $http_upgrade $connection_upgrade`) and 86400s timeouts to prevent premature socket termination through Cloudflare.
+- **High-Performance Compound Feed Matchmaking Query:** Replaced multi-query lookups with an indexed `$nin` aggregation query filtering self, connections, pending requests, and ignored profiles in a single roundtrip.
+- **Payment Signature Verification & Replay Protection:** Enforced cryptographic HMAC-SHA256 digest validation comparing computed hash against Razorpay headers before committing database mutations.
+- **Resilient Background Task Scheduling & Batch Emailing:** Isolated daily cron worker in a separate execution context with try/catch boundaries to prevent unhandled promise rejections from halting the main process.
+- **Cookie Security across Proxied Cloud Architectures:** Configured cross-origin cookie options (`HttpOnly`, `SameSite`, `domain`, `Secure`) and Nginx `X-Forwarded-Proto` forwarding to maintain session persistence behind Cloudflare.
 
 ---
 
@@ -74,34 +124,6 @@ Server-side order generation and HMAC-SHA256 signature verification supporting s
 
 - **DevOps Validation:** The production stack was initially deployed and validated directly on **AWS EC2 with custom Nginx reverse proxying, PM2, and Cloudflare**.
 - **Credit & Cost Optimization:** Because dedicated cloud compute credits are finite, the backend was architected to be completely cloud-agnostic. The containerized Express server can transition seamlessly to **Render, Fly.io, or Railway** while MongoDB Atlas, Razorpay, and AWS SES remain independent external services, requiring zero application-level refactoring.
-
----
-
-## Key Features & Implementations
-
-- **Stateless Authentication:** Cookie-based session validation using signed HTTP-only JWTs, bcrypt password hashing with salt rounds, and input sanitization via `validator`.
-- **Feed Matchmaking Engine:** MongoDB query pipeline dynamically filtering out the user themselves, accepted connections, pending sent requests, and ignored profiles with pagination.
-- **Two-Way Connection Handshake:** Strict state machine (`interested` → `accepted` / `rejected` / `ignored`) preventing duplicate requests or unauthorized interactions.
-- **Real-Time Duplex Chat:** Room-based Socket.IO implementation with cookie-based handshake authentication, real-time typing indicators, and user online/offline presence tracking.
-- **Automated Re-engagement Cron:** Scheduled daily at 08:00 AM IST to batch unreviewed connection requests and dispatch notification digests via AWS SES.
-- **Cryptographic Payment Webhooks:** Server-side HMAC-SHA256 signature verification for Razorpay payment callbacks to guard against forged tier mutations.
-- **Tier Quota Enforcement:** Rolling quota checks enforcing strict tier allowances (Basic: 10 lifetime requests; Pro: 50 requests with 24h rolling reset; Premium: unlimited).
-
----
-
-## Engineering Challenges & Solutions
-
-### 1. Nginx Reverse Proxying for Cloudflare-Terminated WebSockets
-- **Problem:** WebSocket upgrade requests (`wss://`) terminated abruptly when routed through Cloudflare to Nginx due to missing protocol upgrade mappings and default 60-second reverse proxy timeouts.
-- **Solution:** Configured Nginx with dynamic HTTP upgrade maps (`map $http_upgrade $connection_upgrade`), enabled `proxy_http_version 1.1`, forwarded client protocol headers (`X-Forwarded-Proto $scheme`), and extended `proxy_read_timeout` to `86400s` for long-lived duplex streams.
-
-### 2. Compound Indexing for High-Performance Feed Queries
-- **Problem:** Calculating discoverable profiles required excluding self, existing connections, sent requests, and ignored profiles, causing query degradation as the user collection expanded.
-- **Solution:** Structured compound indexes on `connection` collections (`[senderId, receiverId, status]`) and executed single-pass `$nin` queries with indexed pagination (`skip` / `limit`), maintaining execution times under 25ms.
-
-### 3. Payment Signature Verification & Replay Protection
-- **Problem:** Preventing client-side payload manipulation or spoofed webhook callbacks from falsely upgrading account privileges.
-- **Solution:** Implemented cryptographic HMAC-SHA256 validation comparing computed digests (`crypto.createHmac`) against Razorpay webhook signatures before committing database mutations.
 
 ---
 
