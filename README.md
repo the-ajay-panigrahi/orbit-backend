@@ -1,8 +1,8 @@
-# Orbit — Backend API & Real-Time Engine
+# Orbit | Backend API & Real-Time Engine
 
 **Scalable REST API, WebSockets engine, and payment infrastructure powering the Orbit platform.**
 
-The Orbit Backend is an event-driven, production-ready server built with **Node.js**, **Express**, **MongoDB Atlas**, **Socket.IO**, **AWS SES**, and **Razorpay**. It handles developer authentication, matchmaking algorithms, real-time 1-on-1 messaging, transactional notifications, and automated subscription billing.
+The Orbit Backend is an event-driven, production-ready server built with **Node.js**, **Express 5**, **MongoDB Atlas**, **Socket.IO**, **AWS SES**, and **Razorpay**. It handles developer authentication, matchmaking algorithms, real-time 1-on-1 messaging, transactional notifications, automated daily cron digests, and tiered subscription billing.
 
 ---
 
@@ -18,10 +18,11 @@ The Orbit Backend is an event-driven, production-ready server built with **Node.
 ```mermaid
 flowchart TD
     Client["Orbit Web Client (React 19)"]
-    Cloudflare["Cloudflare (Edge SSL & CDN)"]
+    Cloudflare["Cloudflare (Edge SSL, DNS & CDN)"]
     Nginx["Nginx Reverse Proxy (AWS EC2)"]
     Express["Express REST API (Port 7777)"]
     SocketServer["Socket.IO WebSocket Server"]
+    CronWorker["node-cron Scheduler (8:00 AM Daily)"]
     MongoDB[("MongoDB Atlas")]
     SES["AWS SES (Email Service)"]
     Razorpay["Razorpay API & Webhooks"]
@@ -34,7 +35,38 @@ flowchart TD
     Express -->|Transactional Emails| SES
     Express -->|Payments & Verification| Razorpay
     SocketServer -->|Persistent Rooms & Status| MongoDB
+    CronWorker -->|Fetch Pending Requests| MongoDB
+    CronWorker -->|Daily Email Digests| SES
 ```
+
+---
+
+## 🖼️ Screenshots & Cloud Infrastructure
+
+### Frontend Interface Previews (Caramellatte & Coffee Themes)
+
+| Caramellatte Theme (Warm Aesthetic) | Coffee Theme (Dark Roast Aesthetic) |
+| :---: | :---: |
+| <img src="./screenshots/landing-caramellatte.png" width="100%" alt="Orbit Landing Page - Caramellatte Theme" /> | <img src="./screenshots/landing-coffee.png" width="100%" alt="Orbit Landing Page - Coffee Theme" /> |
+
+<details>
+<summary><b>View Cloud Infrastructure & DevOps Previews</b></summary>
+
+<br />
+
+#### AWS EC2 & SES Production Setup
+<p align="center">
+  <!-- Placeholder for AWS EC2 / SES management console screenshot -->
+  <img width="100%" alt="AWS EC2 and SES Configuration" src="https://github.com/user-attachments/assets/6f278fec-be2c-43f5-a5dc-f0c440fc3882" />
+</p>
+
+#### Cloudflare SSL/TLS & Reverse Proxy Routing
+<p align="center">
+  <!-- Placeholder for Cloudflare DNS / SSL dashboard screenshot -->
+  <img width="100%" alt="Cloudflare DNS and SSL Dashboard" src="https://github.com/user-attachments/assets/85fbcd03-ff7c-4073-90ce-8ddcb782311b" />
+</p>
+
+</details>
 
 ---
 
@@ -43,10 +75,36 @@ flowchart TD
 - **Robust Authentication & Security:** Cookie-based session management using signed HTTP-only JWTs, bcrypt password hashing with salt rounds, and input sanitization.
 - **Matchmaking & Discovery Pipeline:** Efficient discovery query that dynamically filters out existing connections, pending requests, and already reviewed profiles while enforcing membership quota rules.
 - **2-Way Connection Handshake System:** Structured connection statuses (`interested`, `ignored`, `accepted`, `rejected`) preventing duplicate or unauthorized interaction requests.
-- **Real-Time WebSocket Messaging:** Room-based real-time communication via **Socket.IO**, supporting real-time delivery, online/offline presence tracking, and typing broadcast events.
+- **Real-Time WebSocket Messaging:** Room-based real-time communication via **Socket.IO**, supporting instant message delivery, online/offline presence tracking, and typing broadcast events.
+- **Automated Daily Cron Reminder Engine:** Scheduled via `node-cron` running daily at 08:00 AM IST (`0 8 * * *`), automatically querying unreviewed connection requests from the previous 24 hours and dispatching daily digest reminders via **AWS SES**.
 - **Tiered Subscriptions & Webhook Processing:** Cryptographic payment order creation and webhook verification with **Razorpay**, automating member tier upgrades (Free, Pro, Premium).
 - **Transactional Notifications with AWS SES:** Instant email dispatch via Amazon Simple Email Service notifying users when they receive a connection request or match.
 - **Rolling Quota Enforcement:** Tier-based daily request reset engine managing free allowances (10 lifetime requests for Basic, 50 daily for Pro, unlimited for Premium).
+
+---
+
+## ⏰ Automated Cron Job Engine
+
+Orbit runs a background scheduler built with `node-cron` and `date-fns` to drive community re-engagement:
+- **Schedule:** `0 8 * * *` (Daily at 8:00 AM, `Asia/Kolkata` timezone).
+- **Target Selection:** Queries MongoDB for connection requests marked `interested` created between `startOfDay(yesterday)` and `endOfDay(yesterday)`.
+- **Deduplication:** Aggregates unique recipient email addresses across pending requests.
+- **Delivery:** Dispatches templated daily summary emails via **AWS SES** reminding builders of pending collaboration requests so matches are never missed.
+
+---
+
+## 🌐 Cloud Infrastructure & Deployment
+
+The Orbit backend is built for zero-downtime operations and infrastructure flexibility:
+
+1. **Production Deployment (AWS EC2 + Cloudflare)**:
+   - Hosted on an **AWS EC2 (Ubuntu)** virtual machine.
+   - Managed continuously with **PM2** process supervisor for automatic crash recovery, logging, and zero-downtime reloads.
+   - Reverse-proxied through **Nginx** configured with dynamic WebSocket upgrade maps (`map $http_upgrade $connection_upgrade`) and 24-hour persistent duplex stream timeouts (`proxy_read_timeout 86400s;`).
+   - Secured behind **Cloudflare** for Full SSL/TLS encryption, edge DDoS protection, and DNS management.
+2. **Cost-Conscious Cloud Redundancy**:
+   - To demonstrate comprehensive DevOps engineering, the production environment was fully built and operated on **AWS EC2 with Nginx, PM2, and Cloudflare**.
+   - Because AWS EC2 compute credits are finite, the application is architected to be completely cloud-agnostic: the containerized Express/Node.js API can deploy effortlessly to **Render, Railway, or Fly.io** while MongoDB Atlas and AWS SES remain independent external services.
 
 ---
 
@@ -90,6 +148,7 @@ Rather than relying on plug-and-play backend-as-a-service platforms, I built thi
 - **Web Framework:** [Express 5](https://expressjs.com/)
 - **Database & ODM:** [MongoDB Atlas](https://www.mongodb.com/atlas), [Mongoose](https://mongoosejs.com/)
 - **Real-Time Engine:** [Socket.IO](https://socket.io/)
+- **Job Scheduling:** [node-cron](https://www.npmjs.com/package/node-cron), [date-fns](https://date-fns.org/)
 - **Cloud Infrastructure:** [AWS EC2 (Ubuntu)](https://aws.amazon.com/ec2/), [AWS SES](https://aws.amazon.com/ses/), [Cloudflare](https://www.cloudflare.com/)
 - **Process Management & Proxy:** [PM2](https://pm2.keymetrics.io/), [Nginx](https://nginx.org/)
 - **Payment Processing:** [Razorpay Node SDK](https://razorpay.com/)
