@@ -1484,6 +1484,72 @@ async function seedDatabase() {
 
       await ConnectionRequest.insertMany(connectionDocs);
       console.log(`Successfully seeded ${connectionDocs.length} initial connection requests for dev@gmail.com!`);
+
+      // Seed active chat conversations for dev@gmail.com
+      const sarahUser = insertedUsers.find((u) => u.email === "sarah@gmail.com");
+      const kunalUser = insertedUsers.find((u) => u.email === "kunal@gmail.com");
+      const chatsToSeed = [];
+
+      if (sarahUser) {
+        chatsToSeed.push({
+          participants: [devUser._id, sarahUser._id],
+          messages: [
+            {
+              senderId: sarahUser._id,
+              text: "Hey Dev! Checked out your profile on Orbit. Love what you're building with real-time systems.",
+              createdAt: new Date(Date.now() - 3600000 * 5),
+            },
+            {
+              senderId: devUser._id,
+              text: "Hi Sarah! Really appreciate that. We're scaling our distributed state engine right now.",
+              createdAt: new Date(Date.now() - 3600000 * 4),
+            },
+            {
+              senderId: sarahUser._id,
+              text: "Impressive! Are you using WebSockets with Redis Pub/Sub for cross-cluster fanout?",
+              createdAt: new Date(Date.now() - 3600000 * 3),
+            },
+            {
+              senderId: devUser._id,
+              text: "Exactly. Redis adapter with horizontal cluster sync. Kept latency sub-15ms.",
+              createdAt: new Date(Date.now() - 3600000 * 2),
+            },
+            {
+              senderId: sarahUser._id,
+              text: "Let's connect soon to discuss architecture and early seed backing!",
+              createdAt: new Date(Date.now() - 3600000 * 1),
+            },
+          ],
+        });
+      }
+
+      if (kunalUser) {
+        chatsToSeed.push({
+          participants: [devUser._id, kunalUser._id],
+          messages: [
+            {
+              senderId: kunalUser._id,
+              text: "Hey Dev, saw your work on Orbit. The Delta-4 factor in high-trust peer collaboration is huge.",
+              createdAt: new Date(Date.now() - 3600000 * 8),
+            },
+            {
+              senderId: devUser._id,
+              text: "Thanks Kunal! That's exactly why we implemented double-opt-in matching. Zero cold spam, 100% mutual intent.",
+              createdAt: new Date(Date.now() - 3600000 * 7),
+            },
+            {
+              senderId: kunalUser._id,
+              text: "Smart. High trust leads to irreversible user behavior shifts. Keep shipping!",
+              createdAt: new Date(Date.now() - 3600000 * 6),
+            },
+          ],
+        });
+      }
+
+      if (chatsToSeed.length > 0) {
+        await Chat.insertMany(chatsToSeed);
+        console.log(`Successfully seeded ${chatsToSeed.length} active chat conversations for dev@gmail.com!`);
+      }
     }
 
     console.log("\n--- Top Demo Accounts ---");
