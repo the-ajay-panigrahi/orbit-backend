@@ -7,7 +7,7 @@ Production-ready REST API, WebSockets messaging engine, automated cron scheduler
 ## Live Deployment
 
 - **Production URL:** [https://withorbit.tech/](https://withorbit.tech/)
-- **Base API Endpoint:** `https://withorbit.tech/api`
+- **Base API Endpoint:** `https://api.withorbit.tech`
 
 > [!NOTE]
 > **Production Deployment & Cloud Hosting Notice**
