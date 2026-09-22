@@ -14,11 +14,13 @@ const initializeSocket = require("./utils/socket");
 require("./utils/cronJob");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 7777;
 
 const allowedOrigins = [
   "http://localhost:5173",
   "https://withorbit.tech",
+  "https://www.withorbit.tech",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 

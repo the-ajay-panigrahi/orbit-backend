@@ -17,6 +17,7 @@ const initializeSocket = (server) => {
     const allowedOrigins = [
         "http://localhost:5173",
         "https://withorbit.tech",
+        "https://www.withorbit.tech",
         process.env.FRONTEND_URL,
     ].filter(Boolean);
 
